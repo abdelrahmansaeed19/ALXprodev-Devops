@@ -1,40 +1,57 @@
 #!/bin/bash
 
-# List of Pokémon
-pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
-
-# Output directory and error log
+# Directory for storing results
 output_dir="pokemon_data"
 error_log="errors.txt"
-
-# Create output directory and clear previous error log
 mkdir -p "$output_dir"
 > "$error_log"
 
-# Function to fetch Pokémon data
+# Pokémon list
+pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Array to hold background PIDs
+declare -a pids=()
+
+# Function to fetch a Pokémon
 fetch_pokemon() {
     local name="$1"
-    local url="https://pokeapi.co/api/v2/pokemon/$name"
-    local file="${output_dir}/${name}.json"
+    local url="https://pokeapi.co/api/v2/pokemon/${name}"
+    local output="${output_dir}/${name}.json"
 
-    echo "Fetching data for $name..."
-
-    response=$(curl -s -w "%{http_code}" -o "$file" "$url")
+    echo "🔄 Fetching $name..."
+    response=$(curl -s -w "%{http_code}" -o "$output" "$url")
 
     if [ "$response" -eq 200 ]; then
-        echo "Saved data to $file ✅"
+        echo "✅ Saved $name to $output"
     else
         echo "❌ Failed to fetch $name (HTTP $response)" | tee -a "$error_log"
-        rm -f "$file"
+        rm -f "$output"
     fi
 }
 
-# Launch all fetches in parallel
+# Start all fetches in background
 for name in "${pokemon_list[@]}"; do
     fetch_pokemon "$name" &
+    pids+=($!)
 done
 
-# Wait for all background jobs to complete
-wait
+# Demonstrate killing one background job (e.g., the 3rd one)
+to_kill_pid="${pids[2]}"
+echo "🛑 Killing process PID $to_kill_pid (simulated cancellation)..."
+kill "$to_kill_pid" 2>/dev/null
 
-echo "✅ All fetch operations completed."
+if [ $? -eq 0 ]; then
+    echo "☠️  Killed process $to_kill_pid"
+else
+    echo "⚠️  Could not kill process $to_kill_pid (maybe already finished)"
+fi
+
+# Wait for the rest of the background processes
+echo "⏳ Waiting for remaining processes to finish..."
+for pid in "${pids[@]}"; do
+    if [ "$pid" != "$to_kill_pid" ]; then
+        wait "$pid"
+    fi
+done
+
+echo "✅ Batch processing complete."
