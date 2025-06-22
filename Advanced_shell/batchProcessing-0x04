@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# List of Pokémon
-pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
-
-# Output directory and error log
+# Output files
 output_dir="pokemon_data"
 error_log="errors.txt"
 
-# Create output directory and clear previous error log
+# Pokémon list
+pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Create output directory and clear error log
 mkdir -p "$output_dir"
 > "$error_log"
 
-# Function to fetch Pokémon data
+# Fetch function
 fetch_pokemon() {
     local name="$1"
     local url="https://pokeapi.co/api/v2/pokemon/$name"
@@ -29,12 +29,22 @@ fetch_pokemon() {
     fi
 }
 
-# Launch all fetches in parallel
+# Parallel fetching
 for name in "${pokemon_list[@]}"; do
     fetch_pokemon "$name" &
 done
 
-# Wait for all background jobs to complete
+# Background job: Dummy process (to demonstrate kill usage)
+echo -e "\nStarting dummy sleep process (30s)..."
+sleep 30 &
+sleep_pid=$!
+echo "Dummy process started with PID: $sleep_pid"
+
+# Wait a few seconds and then kill it
+sleep 3
+kill "$sleep_pid" && echo "Process $sleep_pid killed using 'kill' ✅" || echo "Failed to kill process $sleep_pid ❌"
+
+# Wait for all background fetch jobs to finish
 wait
 
-echo "✅ All fetch operations completed."
+echo -e "\n✅ All Pokémon fetch operations and process management complete."
