@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Ensure the JSON file exists
+if [ ! -f data.json ]; then
+    echo "Error: data.json not found. Run the API fetch script first."
+    exit 1
+fi
+
+# Extract data using jq
+name=$(jq -r '.name' data.json | sed 's/.*/\u&/')                     # Capitalize first letter
+type=$(jq -r '.types[0].type.name' data.json | sed 's/.*/\u&/')      # Capitalize type
+weight=$(jq -r '.weight' data.json | awk '{printf "%.1f", $1 / 10}') # Convert to kg
+height=$(jq -r '.height' data.json | awk '{printf "%.1f", $1 / 10}') # Convert to meters
+
+# Final output
+echo "$name is of type $type, weighs ${weight}kg, and is ${height}m tall."
